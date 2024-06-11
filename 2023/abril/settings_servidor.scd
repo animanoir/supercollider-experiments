@@ -5,6 +5,7 @@ s.options.device_("ASIO : Focusrite USB ASIO");
 
 o = Server.default.options;
 o.postln;
+o.sampleRate = 48000
 o.inDevice_("ASIO : Analigue 1 + 2 (Focusrite Usb Audio");
 o.outDevice_("ASIO : Focusrite USB ASIO");
 Server.default.reboot;
@@ -13,8 +14,6 @@ s.boot;
 s.options.sampleRate = 48000
 
 { [SinOsc.ar(440.rand, 0, 0.2), SinOsc.ar(442, 0, 0.2)] }.play;
-
-~notas = []
 
 {RLPF.ar(Dust.ar([10, 15]), LFNoise1.ar([0.3, 2]).range(100, 3000), 0.02)}.play;
 
