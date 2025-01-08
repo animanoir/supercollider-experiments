@@ -117,7 +117,35 @@ z.release(3);
 
 
 
+
+
 //Ejercicio 1, generar una porción de código que cuente con un oscilador (puede ser de ondas senoidales, triangulares, diente de sierra, cuadrada u algún oscilador de baja frecuencia). Su frecuencia y su amplitud deben ser moduladas por otras señales (también a libre elección el tipo de UGen).
+
+s.boot;
+
+
+(
+{
+	var sin1, sin2, pan, pan2;
+	var sinV = 5.0;
+	var intervals = [1,1.125,1.333,1.5,1.875];
+	sin1 = SinOsc.ar(freq: LFDNoise1.kr(sinV).range(100,500));
+	pan = Pan2.ar(sin1, LFDNoise1.kr(sinV));
+}.play;
+)
+
+
+
+(
+{
+	var tri1, ampMod;
+	ampMod = LFDNoise0.ar(5).range(0,1);
+	tri1 = Saw.ar(freq: LFDNoise0.kr(0.5).range(100,500))!2;
+	tri1 = tri1 * ampMod;
+}.play;
+)
+
+
 
 //Ejercicio 2, síntesis substractiva. Generar una porción de código en la que un ruido (blanco, rosa, browniano, clipnoise) sea filtrado por un filtro pasabanda (BPF) con un Array de 12 frecuencias (colocar el array en el argumento de frecuencias). Todas las frecuencias deben escucharse en los canales de audio (utilizar cualquier técnica para distribuir la señal en los canales 0 y 1 de audio, Splay, Mix y Pan2, Mix y !2). Recuerden poner un valor de rq bajo paara que se distingan las frecuencias!
 
