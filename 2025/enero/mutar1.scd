@@ -1,7 +1,49 @@
+(
+{
+	var sinOsc, freqMod, ampMod, finalSinOsc, pan;
+	ampMod = LFDNoise0.ar(7).range(0, 1);
+	freqMod = LFDNoise1.ar(5).range(80,85);
+	sinOsc = SinOsc.ar(freq: freqMod);
+	pan = Splay.ar( sinOsc, SinOsc.kr(2.0));
+	finalSinOsc = pan * ampMod;
+	finalSinOsc = GVerb.ar(sinOsc, roomsize: 5) * ampMod/2;
+}.play;
+)
+
+(
+{
+	var sinOsc, delayMod,ampMod, fS;
+	ampMod = LFDNoise0(10).range(0,1);
+	sinOsc = SinOsc.ar(freq: 550, mul: 0.1);
+
+	delayMod = LFDNoise0(10).range(0.1,10);
+	fS = Tap.ar(sinOsc)
+	fS = sinOsc * ampMod;
+}.play
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Esto es un comentario.
 /* Estos es
 un comentario multínea
 */
+
 
 // Los () sirven para agrupar código.
 (
@@ -24,11 +66,13 @@ un comentario multínea
 
 (
 {
-	var sig, pan, modAmp;
-	modAmp = LFDNoise0.ar(5);
-	sig = SinOsc.ar(freq: 80, mul: modAmp);
+	var sig, pan, modAmp, delay;
+	modAmp = LFDNoise0.ar(10);
+	sig = SinOsc.ar(freq: modAmp.range(220,440), mul: modAmp);
 	pan = Pan2.ar( sig, pos: modAmp.range(0.0,1.0));
-}.play;
+	delay = DelayN.ar(sig, modAmp.range(5.0,10.0),modAmp.range(0.1,5.0));
+	sig = pan + delay;
+}.play(fadeTime: 5.0);
 )
 
 
@@ -70,4 +114,5 @@ sig = GVerb.ar(sig)* mod3;
 // Parciales infinitas (múltiplos infinitos de una frecuencia base)
 // El pensamiento tras SC, o todo el audio digital, es que estamos trabajando con funciones matemáticas.
 // ¿Todo está normalizado entre -1. 1.?
+
 s.boot;
