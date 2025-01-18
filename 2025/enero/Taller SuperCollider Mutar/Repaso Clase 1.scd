@@ -26,17 +26,17 @@ x = {SinOsc.ar(220)}; //x contiene un oscilador de ondas senoidales cuya frecuen
 
 x.play //.play "pone a andar" la función
 
-x.plot(1/220) //.plot imprime una proción de tiempo indicado de la función contenida en x. En este caso una fracción de 1/220 segundos. Es decir un ciclo de la onda.
+x.plot(1/220) //.plot imprime una porción de tiempo indicado de la función contenida en x. En este caso una fracción de 1/220 segundos. Es decir un ciclo de la onda.
 
 
 
 
 //Las UGens pueden utilizarse para modular otras señales y controlar parámetros.
 
-{SinOsc.ar(200, 0, SinOsc.kr(1))}.play //El segundo SinOsc estámodulando la amplitud de la primera señal cuya frecuencia es 220Hz
+{SinOsc.ar(200, 0, SinOsc.kr(1))!2}.play //El segundo SinOsc estámodulando la amplitud de la primera señal cuya frecuencia es 220Hz
 
 
-{SinOsc.ar( SinOsc.kr(1).range(100,200))}.play //El segundo SinOsc está controlando la frencuencia, proporcionando valores en un rango de 100 a 200Hz
+{SinOsc.ar( SinOsc.kr(1).range(100,200))!2}.play //El segundo SinOsc está controlando la frencuencia, proporcionando valores en un rango de 100 a 200Hz
 
 
 //Podemos controlar los valores de salida de una UGen utilizando el método .range, o indicando sus valores de mul y add
@@ -76,25 +76,54 @@ y.release(5) //realiza un fade out indicado en segundos
 //El siguiente código es un poco más complejo. Tenemos un oscilador el cuál es modulado en frecuencia por un generador de ruido blanco, y en amplitud por un generador  de ruido LFDNoise0.
 (
 z ={
-	arg minfreq=100, maxfreq=1000, amp=0.1; //así podremos cambiar las frecuencias máximas y mínimas, y la amplitud del SinOsc
+	arg minfreq=100, maxfreq=120, amp=0.1; //así podremos cambiar las frecuencias máximas y mínimas, y la amplitud del SinOsc
 
-	var sig, modufreq, moduamp; //Utilizaremos 3 variables
+	var sig, modufreq, moduamp, pan; //Utilizaremos 3 variables
+
+	pan = LFDNoise0.ar(7.5);
 
 	modufreq = WhiteNoise.ar.range(minfreq, maxfreq); //Generador de ruido blanco, sus valores máximos y mínimos serán dados por los argumentos minfreq y maxfreq
 
 	moduamp = LFDNoise0.ar(7.5); //generador de ruido que da 7.5 valores aleatorios por segundo
 
-	sig = SinOsc.ar( modufreq, 0, amp)!2; //modufreq en el lugar del argumento de frecuencia, y amp en el lugar del argumento mul
+	sig = SinOsc.ar( modufreq, 0, amp); //modufreq en el lugar del argumento de frecuencia, y amp en el lugar del argumento mul
+	sig = Pan2.ar(sig, moduamp);
 
 	sig = sig * moduamp; //multiplicamos la señal de nuestro oscilador por el LFDNoise0 para que tenga un sonido más "glitch"
 }.play
 )
 
-z.set(\amp, 1); //el método .set nos permite cambiar algún argumento de la variable
+z.set(\amp, 0.5); //el método .set nos permite cambiar algún argumento de la variable
 z.set(\maxfreq, 120);
 z.set(\minfreq, 20);
+z.set(\minfreq, 100);
 z.release(3);
 
+// modulate numharmonics
+(
+b = {
+	var sig, pan;
+	pan = LFDNoise3.ar(7.5);
+	sig = Blip.ar(100,LFDNoise1.ar(7.5).range(1,100),0.2);
+	sig = Pan2.ar(sig, pan);
+}.play;
+)
+
+(
+~sonido = {
+	arg minFreq=200, maxFreq=1200, amp=0.5;
+
+	var sig, modFreq, modAmp, pan;
+
+	pan = LFDNoise0.ar(7.5);
+	modFreq = WhiteNoise.ar.range(minFreq, maxFreq);
+	modAmp = LFDNoise0(7.5);
+	sig = Blip.ar(modFreq, 200.0, amp);
+	sig = Pan2.ar(sig, modAmp);
+	sig = sig*modAmp;
+}.play;
+)
+~sonido.free;
 
 
 
@@ -122,6 +151,7 @@ z.release(3);
 //Ejercicio 1, generar una porción de código que cuente con un oscilador (puede ser de ondas senoidales, triangulares, diente de sierra, cuadrada u algún oscilador de baja frecuencia). Su frecuencia y su amplitud deben ser moduladas por otras señales (también a libre elección el tipo de UGen).
 
 s.boot;
+s.quit;
 
 
 (
@@ -129,7 +159,7 @@ s.boot;
 	var sin1, sin2, pan, pan2;
 	var sinV = 5.0;
 	var intervals = [1,1.125,1.333,1.5,1.875];
-	sin1 = SinOsc.ar(freq: LFDNoise1.kr(sinV).range(100,500));
+	sin1 = SinOsc.ar(freq: LFDNoise0.kr(sinV).range(100,500));
 	pan = Pan2.ar(sin1, LFDNoise1.kr(sinV));
 }.play;
 )
@@ -140,7 +170,7 @@ s.boot;
 {
 	var tri1, ampMod;
 	ampMod = LFDNoise0.ar(5).range(0,1);
-	tri1 = Saw.ar(freq: LFDNoise0.kr(0.5).range(100,500))!2;
+	tri1 = SinOsc.ar(freq: LFDNoise0.kr(0.5).range(100,500), mul: LFDNoise0.kr(0.5))!2;
 	tri1 = tri1 * ampMod;
 }.play;
 )
