@@ -153,3 +153,44 @@ y = {
    pan*env;
 }.play
 )
+
+// -------------------------------------------------------
+
+(
+y = {
+   var env, sig, modu, pan, theta = SinOsc.kr(thetaSpeed).range(0.1, 10.0), thetaSpeed = 5.0;
+   var freqs = [110.0, 146.83, 164.81, 220.0, 293.66, 329.63, 440.0, 493.88, 587.33, 880.0]; // La menor oriental
+   var trig = Impulse.ar(theta); // Genera triggers aleatorios
+	var selectedFreq = freqs.at(rrand(0,freqs.size-1));
+	selectedFreq.postln;
+	env = EnvGen.kr(Env.perc, doneAction: Done.freeSelf);
+   sig = SinOsc.ar(
+       freq: selectedFreq, // Ligera desafinación
+   )!2;
+   //sig = BPF.ar(sig, Array.series(100, 10, rrand(100,800)), 0.01);
+   //sig = Mix(sig);
+   //sig = CombC.ar(sig, LFDNoise3.kr(theta).range(0.0,1.0)!2, delaytime: LFDNoise3.kr(theta).range(0.0,3.0));
+   pan = Pan2.ar(sig, LFDNoise3.ar(theta).range(-1.0,1.0));
+	//sig = CombL.ar(sig);
+   sig*env;
+}.play
+)
+
+
+// -------------------------------------------------------
+
+({
+	var sig;
+	var panPositions = Array.series(10,-1.0,0.2);
+	var sinPanPositions = Array.fill(10, { SinOsc.kr(rrand(0.1,1.0))});
+	var darkFreqs = [82.41, 110.25, 147.83, 165.32, 220.91, 293.78, 311.13, 440.23, 493.92, 523.35];
+	var etherealFreqs = [146.83, 220.00, 293.66, 349.23, 440.00, 523.25, 587.33, 698.46, 880.00, 1046.50];
+	var amps = [0.7, 0.4, 0.9, 0.3, 0.8, 0.5, 0.2, 0.6, 0.35, 0.85];
+	var env = EnvGen.ar(Env.perc(rrand(0.01, 1)), doneAction: Done.freeSelf);
+	sig = SinOsc.ar(etherealFreqs, 0, sinPanPositions);
+	sig = Pan2.ar(sig,panPositions.scramble);
+	sig = sig * env;
+	Mix.ar(sig);
+	sig = Splay.ar(sig, 0.3);
+}.play
+);
