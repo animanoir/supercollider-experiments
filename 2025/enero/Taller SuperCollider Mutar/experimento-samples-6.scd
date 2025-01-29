@@ -19,22 +19,51 @@ s.boot;
 // te1
 (
 SynthDef.new(\te1, {
-	arg rate=1.0, startpos=0, tTrig=1;
+	arg rate=1.0, start_pos=1000, tTrig=1;
 	var sig, pan;
-	sig = PlayBuf.ar(2,~te1.bufnum, loop:1, rate: rate, startPos: startpos, trigger:tTrig);
+	sig = PlayBuf.ar(2,~te1.bufnum, loop:0, rate: rate, startPos: 5000.0, trigger:tTrig );
 	pan = Pan2.ar(sig.sum, LFNoise2.kr(5).range(-1.0,1.0));
 	Out.ar(0, pan);
 }).add;
 )
 ~te1Buf;
-~te1Buf=Synth(\te1);
-~te1Buf.set(\startpos, rrand(0,~te1.bufnum), \tTrig, 1);
+~te1Buf=Synth(\te1, [\start_pos, rrand(0,10000)]);
 ~te1Buf.set(\rate, 0.5);
+~te1Buf.set([\tTrig, 1])
+
+//Para activarlo a través de un trigger, reproducirá desde la posición de comienzo startPos (recuerden cambiar doneAction a 0)
+x = Synth(\player, [\buf, b.bufnum, \doneaction, 0, \rate, 0.75]);
+x.set(\t_trig, 1)
+
+
 (
-~te1Buf.set(\startpos, rrand(0,100));
-~te1Buf.set(\trigger, rrand(0,100));
-)
+r = Routine({
+	var rate;
+	inf.do({
+		rate = rrand(-1.0, 1.0);
+
+
+		Synth(\te1, [\buf, b.bufnum, \doneaction, 0, \rate, rate]);
+
+		0.2.wait;
+	})
+}).play
+);
+
+r.stop;
+
+
 ~te1Buf.free;
+
+(
+SynthDef.new(\te1Bufrd,{
+	arg buf=0, out=0;
+	var sig, phs;
+	phs=Line.ar(0,BufFrames.kr(buf)-1, BufDur.kr(buf), doneAction:2);
+	sig=BufRd.ar(1,buf,phs);
+	Out.ar(out, sig!2);
+}).add;
+)
 
 // te2
 (
