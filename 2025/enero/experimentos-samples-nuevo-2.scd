@@ -83,11 +83,13 @@ SynthDef.new(\kik1, {
 // satie ------------------------------------------------------------------------------
 
 ~mainPath = PathName.new(thisProcess.nowExecutingPath).parentPath;
-~satie = Buffer.read(s, ~satie++"/samples/satie.wav");
-~voz = PathName.new(thisProcess.nowExecutingPath).parentPath;
+~satie = Buffer.read(s, ~mainPath++"/samples/satie.wav");
+~gas = Buffer.read(s, ~mainPath++"/samples/gas1.wav");
 ~voz = Buffer.read(s, ~mainPath++"/samples/voz.wav");
+~voz2 = Buffer.read(s, ~mainPath++"/samples/voz-2.wav");
 ~satie.numFrames;
 ~voz.numFrames;
+
 (
 SynthDef(\satie, {
 	arg buf =0, rate = 1, out = 0, reset_pos = 0, t_trig = 1, start_pos = 0;
@@ -98,14 +100,20 @@ SynthDef(\satie, {
 		curve: \sine
 	).ar(2);
 	rate = rate * BufRateScale.kr(buf);
-	sig = PlayBuf.ar(1, ~satie.bufnum, rate, Impulse.kr(\trighz.kr(50)) * env, startPos: start_pos, loop: 0);
+	sig = PlayBuf.ar(
+		1,
+		~satie.bufnum,
+		rate,
+		trigger: Impulse.kr(LFNoise2.kr(1.0).range(1, 15))*env,
+		startPos: LFNoise2.kr(1.0).range(0, BufFrames.kr(~satie)-1),
+		loop: 0);
 	pan = Pan2.ar(sig, LFNoise2.kr(0.5).range(-1.0, 1.0));
 	Out.ar(out, pan);
 }).add;
 )
 
 (
-SynthDef(\voz, {
+SynthDef(\gas1, {
 	arg buf =0, rate = 1, out = 0, reset_pos = 0, t_trig = 1, start_pos = 0;
 	var sig, pan, env;
 	env = Env(
@@ -114,18 +122,46 @@ SynthDef(\voz, {
 		curve: \sine
 	).ar(2);
 	rate = rate * BufRateScale.kr(buf);
-	sig = PlayBuf.ar(1, ~voz.bufnum, rate, Impulse.kr(\trighz.kr(50)) * env, startPos: start_pos, loop: 0);
-	pan = Pan2.ar(sig, LFNoise2.kr(1.0).range(-1.0, 1.0));
+	sig = PlayBuf.ar(
+		1,
+		~gas.bufnum,
+		rate,
+		trigger: Impulse.kr(LFNoise2.kr(1.0).range(1, 15))*env,
+		startPos: LFNoise2.kr(1.0).range(0, BufFrames.kr(~gas)-1),
+		loop: 0);
+	pan = Pan2.ar(sig, LFNoise2.kr(0.5).range(-1.0, 1.0));
 	Out.ar(out, pan);
+}).add;
+)
+
+(
+SynthDef(\voz, {
+	arg buf =0, rate = 1, out = 0, reset_pos = 0, t_trig = 1, start_pos = 0;
+	var sig, pan, env, modAmp;
+	modAmp = LFNoise2.kr(1.0).range(0.0,1.5);
+	env = Env(
+		levels: [0, 1, 0],
+		times: [\atk.ir(0.02), \rel.ir(1.0)],
+		curve: \sine
+	).ar(2);
+	rate = rate * BufRateScale.kr(buf);
+	sig = PlayBuf.ar(
+		1,
+		~voz2.bufnum,
+		rate,
+		trigger: Impulse.kr(LFNoise2.kr(1.0).range(1, 15))*env,
+		startPos: LFNoise2.kr(1.0).range(0, BufFrames.kr(~voz2)-1),
+		loop: 0);
+	pan = Pan2.ar(sig, LFNoise2.kr(1.0).range(-1.0, 1.0));
+	Out.ar(out, pan * modAmp);
 }).add;
 )
 (
 x = Routine({
 	inf.do({
-		Synth(\satie, [buf: ~satie.bufnum, rate: 1.0, start_pos: rrand(0, ~satie.numFrames - 1), trighz: exprand(0.5, 5)]);
-		Synth(\voz, [buf: ~satie.bufnum, rate: -1.0, start_pos: rrand(0, ~satie.numFrames - 1), trighz: exprand(0.5, 5)]);
-		Synth(\kik1, [\doneaction, 0, \speed, 1.0]);
-		0.5.wait;
+		Synth(\gas1, [buf: ~satie.bufnum, rate: 1.0, start_pos: rrand(0, ~satie.numFrames - 1)]);
+		Synth(\voz, [buf: ~voz2.bufnum, rate: 1.0, start_pos: rrand(0, ~satie.numFrames - 1), trighz: exprand(0.5, 5)]);
+		1.0.wait;
 	});
 }).play
 );
@@ -136,46 +172,3 @@ x.stop;
 
 // satie ------------------------------------------------------------------------------
 
-
-
-// Amo's
-// amo1
-
-(
-SynthDef(\amo1, {
-	arg rate=1.0;
-	var sig, pan;
-	sig = PlayBuf.ar(2,~amo1.bufnum, loop:1, rate: rate);
-	pan = Pan2.ar(sig.sum, LFNoise2.kr(5).range(-1.0,1.0));
-	Out.ar(0, pan);
-}).add
-);
-~amo1Buf;
-~amo1Buf = Synth(\amo1);
-~amo1Buf.free;
-
-// amo2
-(
-SynthDef(\amo2, {
-	arg rate=1.0;
-	var sig, pan, modAmp;
-	sig = PlayBuf.ar(2,~amo2.bufnum, loop:1, rate: rate);
-	sig = sig * LFDNoise0.kr(20).range(0.0,1.0);
-	pan = Pan2.ar(sig.sum, LFNoise0.kr(20).range(-1.0,1.0));
-	Out.ar(0, pan);
-}).add;
-)
-~amo2Buf;
-~amo2Buf = Synth(\amo2);
-~amo2Buf.free;
-// ¿Cómo liberar los Synths que se acumularon al enviarlos al servidor?
-
-
-// amo3
-(
-{
-	var sig;
-	sig = PlayBuf.ar(2,~amo3.bufnum,loop:1);
-	sig = sig * 1.0;
-}.play;
-)
