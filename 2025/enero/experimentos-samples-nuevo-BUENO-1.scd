@@ -139,6 +139,7 @@ SynthDef(\hh1, {
 		~hh2.bufnum,
 		rate,
 		trigger: Impulse.kr(LFNoise2.kr(1.0).range(1, 50))*env,
+		//trigger: TRand.kr(0.1, 100.0),
 		loop: 0);
 	sig = LPF.ar(
 		in: sig,
