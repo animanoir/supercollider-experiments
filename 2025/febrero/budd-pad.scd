@@ -1,5 +1,6 @@
 s.options.sampleRate = 48000;
 s.boot;
+s.restart;
 
 
 ~mainPath = PathName.new(thisProcess.nowExecutingPath).parentPath;
@@ -181,18 +182,36 @@ SynthDef(\hh1, {
 ~rBudds = r{
 	loop{
 		s.bind{
-			Synth(\budd, [buf: ~budd1.bufnum);
+			Synth(\budd, [buf: ~budd1.bufnum]);
 			Synth(\budd, [buf: ~budd2.bufnum]);
 			Synth(\budd, [buf: ~budd3.bufnum]);
 			Synth(\budd, [buf: ~budd4.bufnum]);
 			Synth(\budd, [buf: ~budd5.bufnum]);
 			Synth(\budd, [buf: ~budd6.bufnum]);
 		};
-		1000.wait;
 	}
 }.play;
 )
 
 ~rBudds.play;
+// --------
+(
+~rBudds2 = Routine.new({
+	Synth(\budd, [buf: ~budd1.bufnum]);
+	0.25.wait;
+	Synth(\budd, [buf: ~budd2.bufnum]);
+	0.25.wait;
+	Synth(\budd, [buf: ~budd3.bufnum]);
+	0.25.wait;
+	Synth(\budd, [buf: ~budd4.bufnum]);
+	0.25.wait;
+	Synth(\budd, [buf: ~budd5.bufnum]);
+	0.25.wait;
+	Synth(\budd, [buf: ~budd6.bufnum]);
+});
+)
+
+~rBudds2.play;
+
 
 

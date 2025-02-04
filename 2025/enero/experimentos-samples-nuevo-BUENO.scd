@@ -158,7 +158,7 @@ x = Routine({
 		//Synth(\kik1, [buf: ~kik1.bufnum]);
 		Synth(\voz, [buf: ~voz2.bufnum, rate: -1.0, start_pos: rrand(0, ~voz2.numFrames - 1)]);
 		Synth(\hh1, [buf: ~hh2.bufnum, rate: 1.0, start_pos: rrand(0, ~hh2.numFrames - 1)]);
-		1.0.wait;
+		10.0.wait;
 	});
 }).play
 );

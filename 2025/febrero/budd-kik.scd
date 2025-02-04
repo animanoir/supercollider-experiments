@@ -1,5 +1,6 @@
 s.options.sampleRate = 48000;
 s.boot;
+s.restart;
 
 
 ~mainPath = PathName.new(thisProcess.nowExecutingPath).parentPath;
@@ -15,9 +16,11 @@ s.boot;
 )
 
 ~voz = Buffer.read(s, ~mainPath++"samples/voz.wav");
+~kick1 = Buffer.read(s, ~mainPath++"/k1.wav");
 ~voz2 = Buffer.read(s, ~mainPath++"/samples/voz2.wav");
 
-~gas = Buffer.read(s, ~mainPath++"/samples/at.wav");
+~at = Buffer.read(s, ~mainPath++"/samples/at.wav");
+~gas = Buffer.read(s, ~mainPath++"/samples/huerco1.wav");
 
 ~ay = Buffer.read(s, ~mainPath++"/samples/coro.wav");
 
@@ -49,7 +52,7 @@ SynthDef(\budd, {
 (
 SynthDef(\gas, {
 	var sig, modAmp, pan, buf = \buf.ir(0);
-	modAmp = SinOsc.kr(Rand.new(0.1, 1.0)).range(0.0,1.0);
+	modAmp = SinOsc.kr(SinOsc.ar(10.0).range(0, 10)).range(0.0,1.0);
 	sig = PlayBuf.ar(
 		numChannels: 2,
 		bufnum: buf,
@@ -57,6 +60,7 @@ SynthDef(\gas, {
 		startPos: LFNoise2.kr(10.0).range(0, BufFrames.ir(\buf.ir)-1),
 		//rate: (BufRateScale.ir(buf) * \rate.ir(1) * {Rand(-12, 0)}.dup(2).midiratio)
 		rate: (BufRateScale.ir(buf) * \rate.ir(1) * \nrate.ir.midiratio)
+		//rate: (BufRateScale.ir(buf) * \rate.ir(1) * {Rand(-1, 1)}.dup(2).midiratio),
 	);
 	sig = Mix.ar(sig.sum);
 	pan = Pan2.ar(sig, LFNoise2.kr(Rand.new(0.1, 10.0)).range(-1.0, 1.0))*(modAmp);
@@ -103,17 +107,35 @@ SynthDef(\tam, {
 (
 SynthDef(\voz, {
 	var sig, modAmp, pan, buf = \buf.ir(0);
-	modAmp = LFNoise2.kr(5.0).range(0.0,1.0);
+	modAmp = LFNoise2.kr(10.0).range(0.0,1.0);
 	sig = PlayBuf.ar(
-		numChannels: 1,
+		numChannels: 2,
 		bufnum: buf,
-		trigger: Impulse.kr(LFNoise2.kr(1.0).range(1, 20)),
-		startPos: LFNoise0.kr(10.0).range(0, BufFrames.ir(\buf.ir)-1),
+		trigger: Impulse.kr(LFNoise2.kr(SinOsc.ar(1.0).range(1.0, 5.0)).range(1, 30)),
+		startPos: LFNoise0.kr(SinOsc.ar(1.0).range(1.0, 5.0)).range(0, BufFrames.ir(\buf.ir)-1),
 		loop: 1,
 		//startPos: LFNoise2.kr(10.0).range(0, BufFrames.ir(\buf.ir)-1)
 	);
-	pan = Pan2.ar(sig, LFNoise2.kr(10.0).range(-1.0, 1.0));
+	pan = Pan2.ar(sig, LFNoise2.kr(SinOsc.ar(1.0).range(1.0, 5.0)).range(-1.0, 1.0));
 	Out.ar(0, pan);
+}).add;
+)
+
+(
+SynthDef(\vozP, {
+	var sig, modAmp, pan, buf = \buf.ir(0);
+	modAmp = LFNoise2.kr(10.0).range(0.0,1.0);
+	sig = PlayBuf.ar(
+		numChannels: 1,
+		bufnum: buf,
+		trigger: Impulse.kr(LFNoise2.kr(SinOsc.ar(\oscspeed.ir).range(1.0, 5.0)).range(1, 30)),
+		startPos: LFNoise0.kr(SinOsc.ar(\oscspeed.ir).range(1.0, 5.0)).range(0, BufFrames.ir(\buf.ir)-1),
+		loop: 1,
+		rate: \rate.ir
+		//startPos: LFNoise2.kr(10.0).range(0, BufFrames.ir(\buf.ir)-1)
+	);
+	//pan = Pan2.ar(sig, LFNoise2.kr(SinOsc.ar(1.0).range(1.0, 5.0)).range(-1.0, 1.0));
+	Out.ar(\pbus.ir, sig);
 }).add;
 )
 
@@ -121,22 +143,15 @@ SynthDef(\voz, {
 ~routine1 = r{
 	loop{
 		s.bind {
-			Synth(\tam, [buf: ~tam1.bufnum]);
-			Synth(\tam, [buf: ~tam2.bufnum]);
-			Synth(\tam, [buf: ~tam3.bufnum]);
-			Synth(\tam, [buf: ~tam4.bufnum]);
-			Synth(\tam, [buf: ~tam5.bufnum]);
-			Synth(\tam, [buf: ~tam6.bufnum]);
-			Synth(\tam, [buf: ~tam7.bufnum]);
-			Synth(\tam, [buf: ~tam8.bufnum]);
-			//Synth(\gas, [buf: ~gas.bufnum]);
-			//Synth(\voz, [buf: ~voz.bufnum, rate: 1.0]);
+			//Synth(\gas, [buf: ~gas.bufnum, \nrate: -12.0]);
+			Synth(\gas, [buf: ~voz.bufnum, \nrate: 1.0]);
+			Synth(\vozP, [buf: ~voz.bufnum, rate: 1.0, \pbus: 0, \oscpseed: 50.0]);
+			Synth(\vozP, [buf: ~voz.bufnum, rate: -1.0, \pbus: 1, \oscpseed: 40.0]);
 		};
 		1000.wait;
 	}
-}
+}.play;
 )
-
 ~routine1.play;
 
 // hihat
@@ -170,29 +185,78 @@ SynthDef(\hh1, {
 
 ~mainTempo = TempoClock.new();
 
+(
 ~budd1 = Buffer.read(s, ~mainPath++"/samples/budd-1.wav");
 ~budd2 = Buffer.read(s, ~mainPath++"/samples/budd-2.wav");
 ~budd3 = Buffer.read(s, ~mainPath++"/samples/budd-3.wav");
 ~budd4 = Buffer.read(s, ~mainPath++"/samples/budd-4.wav");
 ~budd5 = Buffer.read(s, ~mainPath++"/samples/budd-5.wav");
 ~budd6 = Buffer.read(s, ~mainPath++"/samples/budd-6.wav");
+)
 
 (
 ~rBudds = r{
 	loop{
 		s.bind{
-			Synth(\budd, [buf: ~budd1.bufnum);
+			Synth(\budd, [buf: ~budd1.bufnum]);
 			Synth(\budd, [buf: ~budd2.bufnum]);
 			Synth(\budd, [buf: ~budd3.bufnum]);
 			Synth(\budd, [buf: ~budd4.bufnum]);
 			Synth(\budd, [buf: ~budd5.bufnum]);
 			Synth(\budd, [buf: ~budd6.bufnum]);
 		};
-		1000.wait;
 	}
 }.play;
 )
 
 ~rBudds.play;
+// -----------------------------------------------
+(
+~rBudds2 = Routine.new({
+	Synth(\budd, [buf: ~budd1.bufnum]);
+	1.0.wait;
+	Synth(\budd, [buf: ~budd2.bufnum]);
+	1.0.wait;
+	Synth(\budd, [buf: ~budd3.bufnum]);
+	2.0.wait;
+	Synth(\budd, [buf: ~budd4.bufnum]);
+	0.25.wait;
+	Synth(\budd, [buf: ~budd5.bufnum]);
+	1.5.wait;
+	Synth(\budd, [buf: ~budd6.bufnum]);
+});
+)
+
+
+~buddTempo = TempoClock.new(120/60).permanent_(true);
+~rBudds2.play;
+~rBudds2.stop;
+
+
+(
+SynthDef(\kik1, {
+	var sig, out, buf;
+	sig = PlayBuf.ar(
+		1, ~kick1.bufnum
+	);
+	Out.ar(0, sig);
+}).add;
+)
+
+~buddTempo.sched(2, {Synth(\kik1)});
+
+
+~kick1 = Buffer.read(s, ~mainPath++"/k1.wav");
+(
+~playKik = Routine.new({
+	inf.do({
+		Synth(\kik1);
+	});
+	5.yield;
+});
+)
+
+~playKik.play;
+
 
 
