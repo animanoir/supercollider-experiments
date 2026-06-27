@@ -1,11 +1,8 @@
-~ampTremoloMod = 10.0;
-
 (
 // --- 1. SETUP (Run this ONCE) ---
-var folderPath = "/Users/oscarmontiel/Desktop/sonidos/john-cage/Cage Soft Pedal ST/";
+var folderPath = "/Users/oscarmontiel/Desktop/sonidos/poema-1-oam/";
 
 s.waitForBoot({
-    // NOTICE: We removed 'var buffers' and now use '~buffers'
     var pathObj, soundFiles;
 
     pathObj = PathName(folderPath);
@@ -56,9 +53,11 @@ Tdef(\pianoPlayer, {
         };
 
         // Change the speed of the rhythm here
-		(0.125.rrand(0.5)).wait;
+		(0.125.rrand(~randomWait)).wait;
     }
 }).play; // .play is here so it starts immediately when you update it
 )
 
+~randomWait = 1.0;
+~ampTremoloMod = 10.0;
 Tdef(\pianoPlayer).play;
