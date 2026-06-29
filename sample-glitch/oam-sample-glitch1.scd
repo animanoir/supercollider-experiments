@@ -6,7 +6,7 @@ Server.freeAll();
 ~maindDir = thisProcess.nowExecutingPath; 
 ~soundDir = "/Users/oscarmontiel/documents/GitHub/scoll/wavs"
 
-~click1Sound = Buffer.read(s, ~soundDir +/+ "click5.wav");
+~click1Sound = Buffer.read(s, ~soundDir +/+ "hat.wav");
 
 (
 SynthDef(\soundFile, { |buf, rate=1, amp=1, pan=0, cut=0.04, start=0|
@@ -72,7 +72,7 @@ TempoClock.default.tempo = 100 / 60;
     \buf, ~click1Sound,
     \dur, ~cell,
     \pan, Pwhite(-0.9, 0.9, inf),
-    \rel, Pkey(\dur) * 0.9
+    \rel, Pkey(\dur) * Pwhite(0.1, 1.0);
 ).play;
 )
 
