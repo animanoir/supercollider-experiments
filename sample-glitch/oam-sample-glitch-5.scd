@@ -4,10 +4,11 @@ s.meter;
 s.volume.gui;
 Server.freeAll();
 
+(
 ~maindDir = thisProcess.nowExecutingPath; 
-~soundDir = "/Users/oscarmontiel/documents/GitHub/scoll/wavs"
-
-~pad1 = Buffer.read(s, ~soundDir +/+ "noeresespecial.wav")
+~soundDir = "/Users/oscarmontiel/documents/GitHub/scoll/wavs";
+~pad1 = Buffer.read(s, ~soundDir +/+ "noeresespecial.wav");
+)
 
 s.record;
 s.stopRecording;
@@ -17,12 +18,10 @@ TempoClock.default.tempo = 140/60;
 t = TempoClock.default;
 t.schedAbs(t.nextTimeOnGrid(4), {
   ~bassPlayer = ~bass.play(t, quant: 0);
-
   t.sched(16, {
   ~topPlayer = ~top.play(t, quant: 0);
   nil;
   });
-
   t.sched(8, {
   ~subPlayer = ~sub.play(t, quant: 0);
   nil;
@@ -43,10 +42,17 @@ SynthDef(\play, { |buf, amp = 1.0, pan = 0.0, atk = 0.001, rel = 0.12, curve = -
 }).add;
 )
 
+// osckick
+(
+SynthDef(\osckick, {|amp = 1.0, atk = 0.001, rel = 0.12|
+  
+})
+)
+
 (
 ~stepTop = 1/4;  
 ~burstTop = Plazy({
-    var span   = [1, 2, 4, 8].choose;         
+    var span   = [3,4,8].choose;         
     var window = span * ~stepTop; 
     var n      = rrand(span * 2, span * 5); 
     var ratio  = exprand(0.45, 0.85); 
@@ -63,13 +69,13 @@ SynthDef(\play, { |buf, amp = 1.0, pan = 0.0, atk = 0.001, rel = 0.12, curve = -
     \rate, 1.0,
     \pan, Pwhite(-0.8, 0.8, inf),
     \rel, Pkey(\dur) * Pwhite(0.1, 1.0);
-);
+).play;
 )
 
 (
 ~stepBass = 1/2;  
 ~burstBass = Plazy({
-    var span   = [1, 2, 4, 8].choose;         
+    var span   = [4, 8].choose;         
     var window = span * ~stepBass; 
     var n      = rrand(span * 2, span * 5); 
     var ratio  = exprand(0.45, 0.85); 
@@ -111,4 +117,3 @@ SynthDef(\play, { |buf, amp = 1.0, pan = 0.0, atk = 0.001, rel = 0.12, curve = -
     \rel, Pkey(\dur) * Pwhite(0.1, 1.0);
 );
 )
-
