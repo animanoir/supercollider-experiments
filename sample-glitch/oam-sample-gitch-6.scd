@@ -11,7 +11,7 @@ Server.freeAll();
 )
 
 ~tuyateveniste = Buffer.read(s, ~soundDir +/+ "tuyateveniste.wav");
-
+~intfx1 = Buffer.read(s, ~soundDir +/+ "intfx1.wav");
 
 
 
@@ -19,7 +19,7 @@ Server.freeAll();
 s.record;
 s.stopRecording;
 
-TempoClock.default.tempo = 120/60;
+TempoClock.default.tempo = 140/60;
 (
 t = TempoClock.default;
 t.schedAbs(t.nextTimeOnGrid(4), {
@@ -96,7 +96,7 @@ SynthDef(\osckick, {|
 
 //vox1 pbind:
 (
-~stepKick = 1/4;
+~stepKick = 1/8;
 ~burstKick = Plazy({
     var span   = [3,4,8].choose;
     var window = span * ~stepKick;
@@ -132,7 +132,7 @@ Pdef(\vox1, Pbind(
 
 //vox2 pbind:
 (
-~stepKick = 1/4;
+~stepKick = 1/8;
 ~burstKick = Plazy({
     var span   = [3,4,8].choose;
     var window = span * ~stepKick;
@@ -142,31 +142,28 @@ Pdef(\vox1, Pbind(
     Pseq(durs / durs.sum * window, 1);
 });
 ~cellKick = Pwrand([Pseq([~stepKick], 1), ~burstKick], [0.8, 0.2], inf);
-
 Pdef(\vox2, Pbind(
     \instrument, \tuyateveniste,
     \dur, ~cellKick,
-    \buf, ~pad1,
+    \buf, ~intfx1,
     //\startPos, Pwhite(0, ~tuyateveniste.numFrames),
-
     //\startPos, ~tuyateveniste.numFrames / 4,
-
     \startPos, Pfunc({
       var slices = [1, 8, 16].choose;
       var block = (TempoClock.default.beats / 1).floor;
       (block % slices) * (~tuyateveniste.numFrames / slices);
     }),
     \amp, Pwhite(0.1, 0.5),
-    \freq, Pseq([55, 55, 41, 55], inf),
     \atk, 0.001,
     \rel, Pwhite(0.1, 1.0),
     \amp, Pwhite(0.8, 0.9),
-    \pan, Pwhite(-1.0, 1.0)
+    \pan, Pwhite(-1.0,1.0)
 )).quant_(1);   // swaps wait for the next 4-beat boundary
 )
 
 (
-Pdef(\vox1).play;   // start once
+Pdef(\vox1).play;
+Pdef(\vox2).play;
 )
 
 
