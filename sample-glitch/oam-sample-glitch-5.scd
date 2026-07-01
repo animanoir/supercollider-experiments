@@ -44,9 +44,49 @@ SynthDef(\play, { |buf, amp = 1.0, pan = 0.0, atk = 0.001, rel = 0.12, curve = -
 
 // osckick
 (
-SynthDef(\osckick, {|amp = 1.0, atk = 0.001, rel = 0.12|
-  
-})
+SynthDef(\osckick, {|
+  out = 0,
+  amp = 1.0,
+  pan = 0.0,
+  freq = 55,
+  atk = 0.001,
+  rel = 0.3,
+  curve = -4
+  |
+  // pitch envelope
+  var fenv = EnvGen.kr(Env([freq * 7, freq], [rel * 0.2], \exp));
+  // amp Envelope 
+  var aenv = EnvGen.kr(Env.perc(atk, rel, 1, curve), doneAction: Done.freeSelf);
+  var sig = SinOsc.ar(fenv);
+  //sig = (sig * 1.4).tanh;
+  sig = sig * aenv * amp;
+  Out.ar(out, Pan2.ar(sig, pan));
+}).add;
+).play
+
+// pbinds:
+
+//osckick pbind:
+(
+~stepKick = 1/1;  
+~burstKick = Plazy({
+    var span   = [3,4,8].choose;         
+    var window = span * ~stepKick; 
+    var n      = rrand(span * 2, span * 5); 
+    var ratio  = exprand(0.45, 0.85); 
+    var durs   = Array.geom(n, 1, ratio);
+    Pseq(durs / durs.sum * window, 1);
+});
+~cellKick = Pwrand([Pseq([~stepKick], 1), ~burstKick], [0.8, 0.2], inf); 
+~kick = Pbind(
+\instrument, \osckick,
+\dur, ~stepKick,
+\freq, Pseq([55, 55, 41, 55], inf),
+\atk, Pwhite(0.001, 0.1),
+\rel, Pwhite(0.3, 0.5),
+\amp, Pwhite(0.1, 0.5),
+\pan, 0
+).play;
 )
 
 (
