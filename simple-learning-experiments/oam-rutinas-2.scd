@@ -3,21 +3,77 @@ s.stop;
 s.freeAll;
 s.plotTree;
 
+s.record;
+s.stopRecording;
+
+
+t = TempoClock(130/60).permanent_(true);
+
+// main sound directories:
 (
 ~maindDir = thisProcess.nowExecutingPath; 
 ~soundDir = "/Users/oscarmontiel/documents/GitHub/scoll/wavs";
-~pad1 = Buffer.read(s, ~soundDir +/+ "noeresespecial.wav");
 )
 
+// individual sample files:
 ~kik1 = Buffer.read(s, ~soundDir +/+ "kik1.wav");
 ~eliMorirT1 = Buffer.read(s, ~soundDir +/+ "eli-morir-t1.wav");
+~pad1 = Buffer.read(s, ~soundDir +/+ "noeresespecial.wav");
 
-t = TempoClock(140/60);
+(
+p = Pbind(
+  \midinote, Pseq([55, 57, 60], inf).trace,
+  \db, Pwhite(-20.0, -10.0, inf),
+  \pan, Prand([-0.5, 0, 0.5], inf),
+  \dur, Pseq([0.75, 0.25, 0.75, 0.25, 0.5, 0.5], inf)
+);
+)
 
+~seq = p.asStream;
+~seq.next(()).play;
+~seq = p.play;
+~seq.stop;
+~seq.reset;
+
+
+// SynthDef:
+
+(
+  SynthDef(\tone1, {|mainPitch = 1|
+	var sig, freqs, amps, phases, root, ratios;
+  var env = EnvGen.kr(
+    envelope: Env.new(
+    levels: [0, ExpRand(0.1, 0.2), 0],
+    times: [ExpRand(0.01, 1.0), ExpRand(0.5, 5.0)],
+    curve: [4, -4]
+    ),
+    doneAction: 2
+  );
+	root = 210; // lower fundamental for warmth
+	// Just-intonation ratios: root, maj9, maj3, 5, 6, maj7 (consonant, nostalgic)
+	ratios = [1, 9/8, 5/4, 3/2, 5/3, 15/8];
+	// Build 10 freqs by picking chord tones and transposing up per group
+	freqs = Array.fill(10, { |i|
+		root * ratios.choose * (2 ** (i.div(ratios.size)));
+	});
+	amps = Array.exprand(10, 0.005, 0.2).sort.reverse;
+	phases = Array.rand(10, 0, 2pi);
+	sig = DynKlang.ar(`[
+		mainPitch * freqs * LFNoise2.kr(Rand(0.02, 0.05) ! 10).exprange(0.995, 1.005), // very subtle drift keeps layers coherent
+		amps * LFNoise1.kr(1 ! 10).exprange(0.2, 1),
+		phases
+	]);
+	sig = Pan2.ar(sig, SinOsc.kr(exprand(0.1, 0.5), exprand(1, 10)).range(1.0, -1.0));
+  sig = sig * env;
+	sig = Limiter.ar(sig);
+	sig = LeakDC.ar(sig);
+  Out.ar(0, sig);
+}).add;
+)
 
 (
 SynthDef.new(\wav1, {|buf, pan = 0.0, rate = 1.0, startPos = 0, atk = 0.01, rel = 0.01|
-var sig = PlayBuf.ar(2, buf, BufRateScale.kr(buf), startPos: startPos);
+var sig = PlayBuf.ar(2, buf, BufRateScale.kr(buf) * rate, startPos: startPos);
 var env = EnvGen.kr(Env.perc(atk, rel, 1, 1), doneAction: 2);
 sig = sig * env;
 Out.ar(0, Balance2.ar(sig[0], sig[1], pan));
@@ -26,22 +82,84 @@ Out.ar(0, Balance2.ar(sig[0], sig[1], pan));
 
 Synth(\wav1, [buf: ~eliMorirT1, atk: rrand(0.01, 0.05), rel: rrand(0.1, 1.0), startPos: rrand(0, ~eliMorirT1.numFrames), rate: [-1.0, 1.0].choose]);
 
+Synth(\wav1,[buf: ~kik1, rel: rrand(0.1, 1.0), rate: [0.1, 1.0].choose]);
+
+// Pbinds:
 (
-f = {
-  132.do({
-    Synth(\wav1, [buf: ~eliMorirT1, atk: rrand(0.01, 0.05), rel: rrand(0.1, 0.5), startPos: rrand(0, ~eliMorirT1.numFrames), rate: [-1.0, 1.0].choose]);
-  rrand(0.1, 0.5).yield;
-  })
-};
-~routine1 = Routine(f);
+~sample1 = Pbind(
+  \instrument, \wav1,
+  \buf, ~eliMorirT1,
+  \atk, 0.0,
+  \rel, Pwhite(0.1, 0.2),
+  \startPos, Pwhite(0, ~eliMorirT1.numFrames),
+  \rate, Prand([-1.0, 1.0], inf),
+  \dur, 1/4,
+  \pan, Pwhite(-1.0, 1.0)
+);
+
+~kick = Pbind(
+    \instrument, \wav1,
+    \startPos, Pwhite(0, ~kik1.numFrames),
+    \buf, ~kik1,
+    \rel, Pwhite(0.1, 1.0),
+    \rate, 1.0,
+    \dur, 1/2
+);
+
+~melodia1 = Pbind(
+  \instrument, \tone1,
+  \mainPitch, Prand([1, 2, 3], inf),
+  \dur, Prand([1/4, 1/2, Rest(1/2)], inf)
+);
+
+~pbindPad1 = Pbind(
+  \instrument, \wav1,
+  \buf, ~pad1,
+  \atk, 0.0,
+  \rel, Pwhite(0.1, 0.2),
+  \startPos, Pwhite(0, ~pad1.numFrames),
+  \rate, Prand([-1.0, 1.0], inf),
+  \dur, 1/4,
+  \pan, Pwhite(-1.0, 1.0)
+);
 )
+
+(
+~seqLayer1 = ~sample1.play(t);
+~seqKick = ~kick.play(t);
+~seqMelodia1 = ~melodia1.play(t);
+~seqPad1 = ~pbindPad1.play(t);
+)
+// Routines ---------------------------------------------------------------------------------------------
+
+(
+~routine2 = Routine({
+  132.do({
+    Synth(\tone1, [\mainPitch, [1, 1.5, 2, 0.5].choose]);
+    rrand(1/8, 1/2).yield;
+  })
+});
+)
+
+~routine2.play(t);
+
+(
+~routine3  = Routine({
+  132.do({
+    [1, 1.5, 2, 0.5].do({ |p| Synth(\tone1, [\mainPitch, p]) }); // chord per trigger
+    rrand(0.9, 1.8).yield;
+  })
+});
+)
+~routine3.play;
 
 (
 ~routine1.play;
 ~routine2.play;
+~routine3.play;
 )
 
-
+// ------------------------------------------------------------------------------------------------------- 
 (
 {
 // Double harmonic (Byzantine/oriental) scale on A
@@ -196,61 +314,6 @@ scale = scales.choose;
 }.play;
 )
 
-(
-  SynthDef(\tone1, {|mainPitch = 1|
-	var sig, freqs, amps, phases, root, ratios;
-  var env = EnvGen.kr(
-    envelope: Env.new(
-    levels: [0, ExpRand(0.1, 0.2), 0],
-    times: [ExpRand(0.01, 2.0), ExpRand(0.5, 5.0)],
-    curve: [4, -4]
-    ),
-    doneAction: 2
-  );
-	root = 210; // lower fundamental for warmth
-	// Just-intonation ratios: root, maj9, maj3, 5, 6, maj7 (consonant, nostalgic)
-	ratios = [1, 9/8, 5/4, 3/2, 5/3, 15/8];
-	// Build 10 freqs by picking chord tones and transposing up per group
-	freqs = Array.fill(10, { |i|
-		root * ratios.choose * (2 ** (i.div(ratios.size)));
-	});
-	amps = Array.exprand(10, 0.005, 0.2).sort.reverse;
-	phases = Array.rand(10, 0, 2pi);
-	sig = DynKlang.ar(`[
-		mainPitch * freqs * LFNoise2.kr(Rand(0.02, 0.05) ! 10).exprange(0.995, 1.005), // very subtle drift keeps layers coherent
-		amps * LFNoise1.kr(1 ! 10).exprange(0.2, 1),
-		phases
-	]);
-	sig = Pan2.ar(sig, SinOsc.kr(exprand(0.1, 0.5), exprand(1, 10)).range(1.0, -1.0));
-  sig = sig * env;
-  sig = sig * SinOsc.kr(Rand(0.1, 5.0).range(0.0, 1.0));
-	sig = Limiter.ar(sig);
-	sig = LeakDC.ar(sig);
-  Out.ar(0, sig);
-}).add;
-)
-(
-f = {
-  132.do({
-    Synth(\tone1, [\mainPitch, [1, 1.5, 2, 0.5].choose]);
-    rrand(0.1,0.8).yield;
-  })
-};
 
-~routine1 = Routine(f);
-)
 
-(
-f = {
-  132.do({
-    [1, 1.5, 2, 0.5].do({ |p| Synth(\tone1, [\mainPitch, p]) }); // chord per trigger
-    rrand(0.9, 1.8).yield;
-  })
-};
-~routine2 = Routine(f);
-)
-~routine2.play;
-
-s.record;
-s.stopRecording;
 
