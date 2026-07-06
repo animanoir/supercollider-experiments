@@ -1,3 +1,25 @@
+
+t = TempoClock.new(100/60);
+
+(
+Pbind(
+	\type, Pseq([
+		Pseq([\rest, \note], 4), // bar 1
+		Pseq([\note, \rest], 2), \note, Pseq([\rest], 3) // bar 2
+	], 1),
+	\dur, 1/4,
+	\sustain, 1.0,
+	\degree, Pseq([
+		0, 4, 0, 5, 0, 7, 0, 4, // bar 1
+		5, 0, 7, 0, 8, 0, 0, 0  // bar 2
+	], 1),
+).play(t);
+)
+
+
+
+
+
 s.boot;
 s.stop;
 s.freeAll;
@@ -17,10 +39,11 @@ t = TempoClock(100/60).permanent_(true);
 )
 
 // individual sample files:
+(
 ~kik1 = Buffer.read(s, ~soundDir +/+ "kik1.wav");
 ~eliMorirT1 = Buffer.read(s, ~soundDir +/+ "eli-morir-t1.wav");
 ~pad1 = Buffer.read(s, ~soundDir +/+ "noeresespecial.wav");
-
+)
 (
 p = Pbind(
   \midinote, Pseq([55, 57, 60], inf).trace,
@@ -77,7 +100,7 @@ SynthDef.new(\wav1, {|buf, pan = 0.0, rate = 1.0, startPos = 0, atk = 0.01, rel 
 var sig = PlayBuf.ar(2, buf, BufRateScale.kr(buf) * rate, startPos: startPos);
 var env = EnvGen.kr(Env.perc(atk, rel, 1, 1), doneAction: 2);
 sig = sig * env;
-sig = HPF.ar(sig, XLine.kr(Rand(0, 200), 20000, Rand(0.5, 1.0)), 1.0);
+sig = HPF.ar(sig, XLine.kr(Rand(0, 200), 20000, Rand(0.5, 1.0)), Rand(0.5, 1.0));
 sig = Limiter.ar(sig); 
 Out.ar(0, Balance2.ar(sig[0], sig[1], pan));
 }).add;
