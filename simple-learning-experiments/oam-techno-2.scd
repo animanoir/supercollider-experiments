@@ -1,6 +1,6 @@
-
 s.boot;
-s.stop;
+s.quit({"--- Sound server has been stopped.".postln});
+s.serverRunning;
 s.freeAll;
 s.plotTree;
 s.meter;
@@ -11,43 +11,72 @@ s.stopRecording;
 (
 s.waitForBoot({
   
-t = TempoClock(140/60).permanent_(true);
-// main sound directories:
-~maindDir = thisProcess.nowExecutingPath; 
-~soundDir = "/Users/oscarmontiel/documents/GitHub/scoll/wavs";
-// individual sample files:
-~kik1 = Buffer.read(s, ~soundDir +/+ "kik1.wav");
-~hat1 = Buffer.read(s, ~soundDir +/+ "hat.wav");
-~pad1 = Buffer.read(s, ~soundDir +/+ "noeresespecial.wav");
-~pad2 = Buffer.read(s, ~soundDir +/+ "luz.wav");
-~kik2 = Buffer.read(s, ~soundDir +/+ "kik2.wav");
-~deepKik = Buffer.read(s, ~soundDir +/+ "deepkik1.wav");
-});
-)
-~hat1 = Buffer.read(s, ~soundDir +/+ "hat.wav");
-(
-// Gemidos de Elizabeth mientras se masturba para mí:
-~elig1 = Buffer.read(s, ~soundDir +/+ "eligem1.wav");
-~elig2 = Buffer.read(s, ~soundDir +/+ "eligem2.wav");
-~elig3 = Buffer.read(s, ~soundDir +/+ "eligem3.wav");
-~elig4 = Buffer.read(s, ~soundDir +/+ "eligem4.wav");
-~elig5 = Buffer.read(s, ~soundDir +/+ "eligem5.wav");
-~elig6 = Buffer.read(s, ~soundDir +/+ "eligem6.wav");
+  t = TempoClock(100/60).permanent_(true);
 
-~eliGemidos = [
-  ~elig1,
-  ~elig2,
-  ~elig3,
-  ~elig4,
-  ~elig5,
-  ~elig6,
-];
+  // main sound directories:
+  ~soundDir = "/Users/oscarmontiel/documents/GitHub/scoll/wavs";
+
+  // individual sample files:
+  ~kik1 = Buffer.read(s, ~soundDir +/+ "kik1.wav");
+  ~hat1 = Buffer.read(s, ~soundDir +/+ "hat.wav");
+  ~pad1 = Buffer.read(s, ~soundDir +/+ "noeresespecial.wav");
+  ~pad2 = Buffer.read(s, ~soundDir +/+ "luz.wav");
+  ~kik2 = Buffer.read(s, ~soundDir +/+ "kik2.wav");
+  ~deepKik = Buffer.read(s, ~soundDir +/+ "deepkik1.wav");
+
+  // Gemidos de Elizabeth mientras se masturba para mí:
+  ~elig1 = Buffer.read(s, ~soundDir +/+ "eligem1.wav");
+  ~elig2 = Buffer.read(s, ~soundDir +/+ "eligem2.wav");
+  ~elig3 = Buffer.read(s, ~soundDir +/+ "eligem3.wav");
+  ~elig4 = Buffer.read(s, ~soundDir +/+ "eligem4.wav");
+  ~elig5 = Buffer.read(s, ~soundDir +/+ "eligem5.wav");
+  ~elig6 = Buffer.read(s, ~soundDir +/+ "eligem6.wav");
+
+  ~eliGemidos = [
+    ~elig1,
+    ~elig2,
+    ~elig3,
+    ~elig4,
+    ~elig5,
+    ~elig6,
+  ];
+
+  s.sync;
+  "--- Executed function inside s.waitForBoot;".postln;
+});
 )
 // ------------------
 
-// SynthDef:
+// SynthDefs:
 
-// gemido con reverb;
+// noise with filter #1:
+(
+  SynthDef(\noise1, { |sweepTime = 10.0, amp = 1.0, pan = 0.0|
+    var sig, env, cutoff, ampMod, panMod;
+    cutoff = XLine.kr(1500, 20000, sweepTime, doneAction: 2);
+    env = EnvGen.kr(
+      Env.new(
+        levels: [0, ExpRand(0.3, 0.6), 0],
+        times: [ExpRand(0.3, 1.0), ExpRand(0.5, 5.0)],
+        curve: [4, -4]
+      ),
+      doneAction: 2
+    );
+    panMod = SinOsc.kr(Rand(0.1, 1.0).range(0.1, 0.15), Rand(0.1, 0.9));
+    ampMod = SinOsc.kr(Rand(0.1, 1.0).range(0.1, 0.5), Rand(0.1, 0.9));
+    sig = WhiteNoise.ar(1.0);
+    sig = HPF.ar(sig, cutoff);
+    sig = sig * env * amp * ampMod;
+    sig = Pan2.ar(sig, pan * panMod);
+    
+    sig = Limiter.ar(sig);
+    Out.ar(0, sig) 
+  }).add;
+)
+
+Synth(\noise1, [\pan, rrand(-1.0, 1.0), \amp, rrand(0.1, 1.0)]);
+
+// gemido con reverb:
 (
 SynthDef(\eliGemRev, { |buf, pan = 0, rate = 1.0, startPos = 0, mix = 0.4, room = 0.1, amp = 1.0, delTime = 0.375, decay = 2.0|
     var sig = PlayBuf.ar(2, buf, BufRateScale.kr(buf) * rate, startPos: startPos, doneAction: 2);
@@ -226,7 +255,6 @@ var durs = Array.geom(rrand(3, 6), 1, rrand(0.5, 0.8));
 
 (
 ~seqEliGemidos = ~pbindEliGemidos.play(t);
-~seqDeepkik = ~deepKik.play(t);
 ~seqKik = ~kick.play(t);
 ~seqEliGemRev = ~pbindEliGemRev.play(t); 
 ~seqNoiseHat = ~pbindNoiseHat.play(t);
@@ -237,3 +265,15 @@ var durs = Array.geom(rrand(3, 6), 1, rrand(0.5, 0.8));
 
 s.record;
 s.stopRecording;
+
+// Pattern studies ----------------------------------------
+
+(
+  ~pat = Pwhite(0.0, 1.0, inf) * Pseq([-1, 1], inf);
+  ~seq = ~pat.asStream.nextN(8);
+)
+
+Event.eventTypes.keys.postcs;\
+Event.parentEvents.default[\amp].postcs;
+
+Quarks.gui;
