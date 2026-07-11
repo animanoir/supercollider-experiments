@@ -277,3 +277,7 @@ Event.eventTypes.keys.postcs;\
 Event.parentEvents.default[\amp].postcs;
 
 Quarks.gui;
+
+// Granular synthesis:
+
+
