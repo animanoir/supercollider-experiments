@@ -42,14 +42,25 @@ s.waitForBoot({
   ~pigPad1 = Buffer.read(s, ~soundDir +/+ "pad-gritty-melancholic1.wav");
   ~pigPad2 = Buffer.read(s, ~soundDir +/+ "pad-gritty-melancholic2.wav");
 
-  ~p1wav = Buffer.read(s, ~soundDir +/+ "p1.wav");
-  ~p2wav = Buffer.read(s, ~soundDir +/+ "p2.wav");
-  ~p3wav = Buffer.read(s, ~soundDir +/+ "p3.wav");
-  ~p4wav = Buffer.read(s, ~soundDir +/+ "p4.wav");
-  ~p5wav = Buffer.read(s, ~soundDir +/+ "p5.wav");
-  ~p6wav = Buffer.read(s, ~soundDir +/+ "p6.wav");
-  ~p7wav = Buffer.read(s, ~soundDir +/+ "p7.wav");
+  ~p1wav = Buffer.read(s, ~soundDir +/+ "pg1.wav");
+  ~p2wav = Buffer.read(s, ~soundDir +/+ "pg2.wav");
+  ~p3wav = Buffer.read(s, ~soundDir +/+ "pg3.wav");
+  ~p4wav = Buffer.read(s, ~soundDir +/+ "pg4.wav");
+  ~p5wav = Buffer.read(s, ~soundDir +/+ "pg5.wav");
+  ~p6wav = Buffer.read(s, ~soundDir +/+ "pg6.wav");
+  ~p7wav = Buffer.read(s, ~soundDir +/+ "pg7.wav");
   
+  ~pWavs = [
+    ~p1wav,
+    ~p2wav,
+    ~p3wav,
+    ~p4wav,
+    ~p5wav,
+    ~p6wav,
+    ~p7wav,
+  ];
+
+  ~pMono = Buffer.readChannel(s, ~soundDir +/+ "pg1.wav", channels: [0]);
 
   // ---- SynthDefs ----
 
@@ -178,19 +189,33 @@ s.waitForBoot({
     sig = Limiter.ar(sig);
     Out.ar(0, Pan2.ar(sig, pan));
   }).add;
+  
+  SynthDef(\granWav1, { |buf|
+  var sig;
+  sig = GrainBuf.ar(
+    2,
+    Impulse.kr(8),
+    0.05,
+    buf,
+    rate: 7.midiratio,
+    pos: Line.kr(0, 1,BufDur.ir(buf), doneAction: 2),
+  );
+  Out.ar(0, sig)
+  }).add;
 
   s.sync;
   "--- Executed function inside s.waitForBoot;".postln;
 });
 )
-// ------------------
+// --------------------------------------------------------------------
 
 Synth(\noise1, [\pan, rrand(-1.0, 1.0), \amp, rrand(0.1, 1.0)]);
 
 
 Synth(\wavPb, [buf: ~pigPad1, atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);
 Synth(\wavPb, [buf: ~pigPad2, atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);
-
+Synth(\wavPb, [buf: ~pWavs.choose, rate: 0.5,atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);
+Synth(\granWav1, [buf: ~pMono]);
 
 Synth(\wavPbGrain, [buf: ~pigPad1, atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);
 Synth(\wavPbGrain, [buf: ~pigPad2, atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);

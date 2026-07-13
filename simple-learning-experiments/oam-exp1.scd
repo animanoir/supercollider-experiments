@@ -8,15 +8,17 @@ s.record;
 s.stopRecording;
 
 // bus (canales de audio) creation:
-
 (
-s.waitForBoot({
   s.newBusAllocators;
   ~mixerBus = Bus.audio(s, 8);
   ~delayBus = Bus.audio(s, 2);
   ~reverbBus = Bus.audio(s, 2);
+)
 
-  t = TempoClock(100/60).permanent_(true);
+(
+s.waitForBoot({
+
+  t = TempoClock(110/60).permanent_(true);
 
   // main sound directories:
   ~soundDir = "/Users/oscarmontiel/documents/GitHub/scoll/wavs";
@@ -41,15 +43,6 @@ s.waitForBoot({
 
   ~pigPad1 = Buffer.read(s, ~soundDir +/+ "pad-gritty-melancholic1.wav");
   ~pigPad2 = Buffer.read(s, ~soundDir +/+ "pad-gritty-melancholic2.wav");
-
-  ~p1wav = Buffer.read(s, ~soundDir +/+ "p1.wav");
-  ~p2wav = Buffer.read(s, ~soundDir +/+ "p2.wav");
-  ~p3wav = Buffer.read(s, ~soundDir +/+ "p3.wav");
-  ~p4wav = Buffer.read(s, ~soundDir +/+ "p4.wav");
-  ~p5wav = Buffer.read(s, ~soundDir +/+ "p5.wav");
-  ~p6wav = Buffer.read(s, ~soundDir +/+ "p6.wav");
-  ~p7wav = Buffer.read(s, ~soundDir +/+ "p7.wav");
-  
 
   // ---- SynthDefs ----
 
@@ -183,22 +176,17 @@ s.waitForBoot({
   "--- Executed function inside s.waitForBoot;".postln;
 });
 )
-// ------------------
+// Synths test ------------------------------------------------------------------------------
 
 Synth(\noise1, [\pan, rrand(-1.0, 1.0), \amp, rrand(0.1, 1.0)]);
-
-
 Synth(\wavPb, [buf: ~pigPad1, atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);
 Synth(\wavPb, [buf: ~pigPad2, atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);
-
-
-Synth(\wavPbGrain, [buf: ~pigPad1, atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);
-Synth(\wavPbGrain, [buf: ~pigPad2, atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);
+// Synth(\wavPbGrain, [buf: ~pigPad1, atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);
+// Synth(\wavPbGrain, [buf: ~pigPad2, atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);
 
 (
   ~reverbSynth = Synth(\busReverb, [in: ~reverbBus, out: 0], addAction: \addToTail);
 )
-
 
 Synth(\noiseHat,[\amp, rrand(0.01, 0.2), \rel, rrand(0.01, 0.5)]);
 
@@ -207,6 +195,7 @@ Synth(\noiseHat,[\amp, rrand(0.01, 0.2), \rel, rrand(0.01, 0.5)]);
 var pad1StartPos = Pdup(16, Pwhite(0, ~pad1.numFrames));
 var dur1 = Pseq([1,Prand([1/4, Rest(1/4)], inf), Rest(1/2), Prand([Rest(1/2), 1/2, 1/4], 1)], inf);
 var durs = Array.geom(rrand(3, 6), 1, rrand(0.5, 0.8));
+
 ~kick = Pbind(
     \instrument, \sKik1,
     \startPos, 0,
@@ -291,6 +280,21 @@ var durs = Array.geom(rrand(3, 6), 1, rrand(0.5, 0.8));
 );
 )
 
+(
+var eliGemidos = [~elig1, ~elig2, ~elig3, ~elig4, ~elig5, ~elig6]; 
+var dur = 1/4;
+var durTimes = 8;
+~pbindEliGemSeq = Pbind(
+     \instrument, \wav1,
+    \startPos, 0,
+    \buf, Pdup(durTimes / dur, Prand(eliGemidos, inf)),
+    \rel, Pwhite(0.1, 0.2),
+    \rate, 1.0,
+    \pan, 0.0,
+    \dur, 1/4
+  )
+)
+
 // Gritty pad sequential event:
 (
   var padsStartPos = Pdup(8, Pwhite(0, ~pigPad1.numFrames));
@@ -314,7 +318,7 @@ var durs = Array.geom(rrand(3, 6), 1, rrand(0.5, 0.8));
     \rel, Pwhite(0.1, 1.0),
     \startPos,padsStartPos,
     \rate, 1.0,
-    \dur, Pseq([1, Rest(1/2), 1/4, Prand([1/4, Rest(1/2)], 1)], 8),
+    \dur, Pseq([1/2], 8),
     \pan, Pwhite(-0.2, 0.2)
   );
 
@@ -330,20 +334,14 @@ t = TempoClock(100/60).permanent_(true);
 (
   ~seqEliGemidos = ~pbindEliGemidos.play(t);
   ~seqKik = ~kick.play(t);
-  ~seqEliGemRev = ~pbindEliGemRev.play(t); 
+  //~seqEliGemRev = ~pbindEliGemRev.play(t); 
   ~seqNoiseHat = ~pbindNoiseHat.play(t);
   ~seqGrittyPads = ~grittyPadSeqEvent.play(t);
   ~seqHat = ~pbindHat.play(t);
+  ~seqEliGemSeq = ~pbindEliGemSeq.play(t);
 )
 
 s.record;
 s.stopRecording;
 
-// Pattern studies ----------------------------------------
-
-(
-  ~pat = Pwhite(0.0, 1.0, inf) * Pseq([-1, 1], inf);
-  ~seq = ~pat.asStream.nextN(8);
-)
-
-
+Platform.userExtensionDir;
