@@ -16,7 +16,7 @@ s.waitForBoot({
   ~delayBus = Bus.audio(s, 2);
   ~reverbBus = Bus.audio(s, 2);
 
-  t = TempoClock(100/60).permanent_(true);
+  t = TempoClock(120/60).permanent_(true);
 
   // main sound directories:
   ~soundDir = "/Users/oscarmontiel/documents/GitHub/scoll/wavs";
@@ -210,6 +210,50 @@ s.waitForBoot({
 // --------------------------------------------------------------------
 
 Synth(\noise1, [\pan, rrand(-1.0, 1.0), \amp, rrand(0.1, 1.0)]);
+Synth(\sKik1, [\pan, rrand(-1.0, 1.0), \amp, rrand(0.1, 1.0)]);
+
+(
+  ~kikPadRoutine = {
+    inf.do{
+     var wChoose = [1, 3/2].choose;
+     Synth(\sKik1, [\pan, rrand(-1.0, 1.0), \amp, rrand(0.1, 1.0)]);
+     Synth(\wavPb, [\buf, ~pigPad1 ,\pan, rrand(-1.0, 1.0), \amp, rrand(0.1, 1.0)]);
+     //Synth(\wavPb, [buf: ~pWavs.choose, rate: 0.5,atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);
+     ([wChoose, 1/2].choose).yield;
+    }
+  };
+  ~kik1Player = Routine(~kikPadRoutine);
+)
+
+(
+  ~hihat = {
+    inf.do{
+     Synth(\noiseHat,[\amp, rrand(0.5, 1.0), \rel, rrand(0.01, 0.1)]);
+     (1/2).yield;
+    }
+  }
+)
+
+
+(
+  ~hihat = {
+    inf.do{
+     Synth(\noiseHat,[\amp, rrand(0.5, 1.0), \rel, rrand(0.01, 0.1)]);
+     (1/2).yield;
+    }
+  }
+)
+
+t = TempoClock(120/60).permanent_(true);
+
+~hihatPlayer = Routine(~hihat);
+(
+~kik1Player.play(t);
+~hihatPlayer.play(t);
+)
+
+~kik1Player.stop(t);
+~kik1Player.reset(t);
 
 
 Synth(\wavPb, [buf: ~pigPad1, atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);
@@ -225,7 +269,7 @@ Synth(\wavPbGrain, [buf: ~pigPad2, atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]
 )
 
 
-Synth(\noiseHat,[\amp, rrand(0.01, 0.2), \rel, rrand(0.01, 0.5)]);
+Synth(\noiseHat,[\amp, rrand(0.01, 0.8), \rel, rrand(0.01, 0.5)]);
 
 // Pbinds:
 (
@@ -350,7 +394,6 @@ var durs = Array.geom(rrand(3, 6), 1, rrand(0.5, 0.8));
 )
 
 // Sequential code:
-t = TempoClock(100/60).permanent_(true);
 
 (
   ~seqEliGemidos = ~pbindEliGemidos.play(t);
