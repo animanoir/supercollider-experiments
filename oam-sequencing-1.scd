@@ -28,7 +28,7 @@ s.waitForBoot({
   ~kik1    = Buffer.read(s, ~soundDir +/+ "kik1.wav");
   ~hat1    = Buffer.read(s, ~soundDir +/+ "hat.wav");
   ~pad1    = Buffer.read(s, ~soundDir +/+ "noeresespecial.wav");
-  ~pad2    = Buffer.read(s, ~soundDir +/+ "luz.wav");
+  ~pad2    = Buffer.read(s, ~soundDir +/+ "pad1.wav");
   ~kik2    = Buffer.read(s, ~soundDir +/+ "kik2.wav");
   ~deepKik = Buffer.read(s, ~soundDir +/+ "deepkik1.wav");
 
@@ -214,90 +214,23 @@ s.waitForBoot({
 
 Synth(\noise1, [\pan, rrand(-1.0, 1.0), \amp, rrand(0.1, 1.0)]);
 Synth(\sKik1, [\pan, rrand(-0.1, 0.1), \amp, rrand(0.9, 1.0)]);
-
-(
-  ~kikPadRoutine = {
-    inf.do{
-     var wChoose = [1, 3/2].choose;
-     Synth(\sKik1, [\pan, rrand(-1.0, 1.0), \amp, rrand(0.1, 1.0)]);
-     Synth(\wavPb, [\buf, ~pigPad1 ,\pan, rrand(-1.0, 1.0), \amp, rrand(0.1, 1.0)]);
-     //Synth(\wavPb, [buf: ~pWavs.choose, rate: 0.5,atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);
-     ([wChoose, 1/2].choose).yield;
-    }
-  };
-  ~kik1Player = Routine(~kikPadRoutine);
-)
-
-(
-~kik44Routine = {
-    inf.do{
-     Synth(\sKik1, [\pan, rrand(-0.1, 0.1), \amp, rrand(0.1, 1.0)]);
-     //Synth(\wavPb, [buf: ~pWavs.choose, rate: 0.5,atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);
-     1.yield;
-    }
-  };
-~kik44Player = Routine(~kik44Routine);
-)
-
-(
-~kik44Player.play(t);
-~hihatPlayer.play(t);
-)
-(
-  ~hihat = {
-    inf.do{
-     Synth(\noiseHat,[\amp, rrand(0.5, 1.0), \rel, rrand(0.01, 0.1)]);
-     (1/2).yield;
-    }
-  }
-)
-
-
-(
-  ~hihat = {
-    inf.do{
-     Synth(\noiseHat,[\amp, rrand(0.5, 1.0), \rel, rrand(0.01, 0.1)]);
-     (1/2).yield;
-    }
-  }
-)
-
-t = TempoClock(150/60).permanent_(true);
-
-~hihatPlayer = Routine(~hihat);
-(
-~kik1Player.play(t);
-~hihatPlayer.play(t);
-)
-
-~kik1Player.stop(t);
-~kik1Player.reset(t);
-
-
 Synth(\wavPb, [buf: ~pigPad1, atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);
 Synth(\wavPb, [buf: ~pigPad2, atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);
 Synth(\wavPb, [buf: ~pWavs.choose, rate: 0.5,atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);
 Synth(\granWav1, [buf: ~pMono]);
-
-Synth(\wavPbGrain, [buf: ~pigPad1, atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);
-Synth(\wavPbGrain, [buf: ~pigPad2, atk: rrand(0.01, 0.08), rel: rrand(0.1, 1.0)]);
-
-(
-  ~reverbSynth = Synth(\busReverb, [in: ~reverbBus, out: 0], addAction: \addToTail);
-)
-
-
 Synth(\noiseHat,[\amp, rrand(0.01, 0.8), \rel, rrand(0.01, 0.5)]);
 
 // Pbinds:
 (
-var pad1StartPos = Pdup(16, Pwhite(0, ~pad1.numFrames));
+var padStartPos = Pdup(8, Pwhite(0, ~pad1.numFrames));
 var dur1 = Pseq([1,Prand([1/4, Rest(1/4)], inf), Rest(1/2), Prand([Rest(1/2), 1/2, 1/4], 1)], inf);
 var durs = Array.geom(rrand(3, 6), 1, rrand(0.5, 0.8));
+var hihatDur = Prand([1/4, Rest(1/2)], inf);
 ~kick = Pbind(
     \instrument, \sKik1,
     \startPos, 0,
     \buf, ~kik2,
+    \pan, 0,
     \rel, Pwhite(0.1, 0.2),
     \rate, 1.0,
     \dur, Pseq([1, Rest(1/2), 1/4, Rest(1/2)], inf)
@@ -310,7 +243,7 @@ var durs = Array.geom(rrand(3, 6), 1, rrand(0.5, 0.8));
     \rel, Pwhite(0.1, 0.2),
     \rate, 1.0,
     \pan, 0.0,
-    \dur, dur1 
+    \dur, Pdefn(\gemDur, dur1); 
 );
 
 ~pbindEliGemRev = Pbind(
@@ -324,12 +257,13 @@ var durs = Array.geom(rrand(3, 6), 1, rrand(0.5, 0.8));
     \delTime, Prand([1/8, 3/16, 1/4, 3/4] * 4, inf) * Pfunc({ t.beatDur }),
     \decay, Pwhite(1.0, 2.0),
     \amp, Pwhite(0.5, 1.0),
-    \dur, Pseq([1, Rest(1), Prand([1, 1/2], 1)], inf)
+    \dur, Pdefn(\gemDur, Pseq([1, Rest(1), Prand([1, 1/2], 1)], inf))
 );
 
-~deepKik = Pbind(
+~pbindDeepKik = Pbind(
     \instrument, \sKik1,
     \startPos, 0,
+    \pan, 0,
     \buf, ~deepKik,
     \rel, Pwhite(0.1, 0.2),
     \rate, 1.0,
@@ -341,7 +275,7 @@ var durs = Array.geom(rrand(3, 6), 1, rrand(0.5, 0.8));
   \buf, ~pigPad1,
   \atk, 0.0,
   \rel, Pwhite(0.1, 1.0),
-  \startPos,pad1StartPos,
+  \startPos,padStartPos,
   \rate, 1.0,
   \dur, Pseq([1, Rest(1/2), 1/4, Prand([1/4, Rest(1/2)], 1)], inf),
   \pan, Pwhite(-0.2, 0.2)
@@ -351,85 +285,58 @@ var durs = Array.geom(rrand(3, 6), 1, rrand(0.5, 0.8));
   \buf, ~pigPad2,
   \atk, 0.0,
   \amp, Pwhite(0.1, 0.8),
-  \rel, Pwhite(0.01, 0.05),
-  \startPos,pad1StartPos,
+  \rel, Pwhite(0.1, 0.5),
+  \startPos,padStartPos,
   \rate, 1.0,
-  \dur, 1/4,
+  \dur, Pseq([1, Rest(1/2), 1/4, Prand([1/4, Rest(1/2)], 1)], inf),
   \pan, Pwhite(-0.2, 0.2)
 );
 
 ~pbindHat = Pbind(
   \instrument, \wav1,
   \buf, ~hat1,
-\rel, Pwhite(0.05, 0.2),
+  \rel, Pwhite(0.05, 0.2),
   \amp, Pwhite(0.1, 1.0),
   \startPos, 0,
   \rate, 1.0,
-  \dur, Prand([1/4, Rest(1/2)], inf),
+  \dur, hihatDur,
   \pan, Pwhite(-0.5, 0.5)
 );
 
 ~pbindNoiseHat = Pbind(
   \instrument, \noiseHat,
-  \amp, Pwhite(0.1, 1.0),
+  \amp, Pwhite(0.8, 1.0),
   \rel, Pwhite(0.01, 0.1),
   \dur, 1/4,
   \pan, Pwhite(-1.0, 1.0);
 );
-)
-
-// Gritty pad sequential event:
-(
-  var padsStartPos = Pdup(8, Pwhite(0, ~pigPad1.numFrames));
-
-  ~pbindPad1 = Pbind(
-  \instrument, \wavPb,
-  \buf, ~pigPad1,
-  \atk, 0.0,
-  \rel, Pwhite(0.1, 1.0),
-  \startPos,padsStartPos,
-  \rate, 1.0,
-  \dur, Pseq([1, Rest(1/2), 1/4, Prand([1/4, Rest(1/2)], 1)], 8),
-  \pan, Pwhite(-0.2, 0.2)
-  );   
-    
-  ~pbindPad2 = Pbind(
-    \instrument, \wavPb,
-    \buf, ~pigPad2,
-    \atk, 0.0,
-    \amp, Pwhite(0.1, 0.8),
-    \rel, Pwhite(0.1, 1.0),
-    \startPos,padsStartPos,
-    \rate, 1.0,
-    \dur, Pseq([1, Rest(1/2), 1/4, Prand([1/4, Rest(1/2)], 1)], 8),
-    \pan, Pwhite(-0.2, 0.2)
-  );
 
   ~grittyPadSeqEvent = Pseq([
     Pfindur(8, ~pbindPad1),
     Pfindur(8, ~pbindPad2),
+    Plazy({Pdefn(\pan, Pwhite(-1.0, 1.0)); Pfindur(8, ~pbindPad1);}),
+    Pfindur(8, ~pbindPad2),
   ], inf);
+
+  ~eliGemidosSeq = Pseq([
+    Ppar([~pbindEliGemidos, ~pbindEliGemRev], 8),
+    Plazy({
+      Pdefn(\dur, hihatDur);
+      Ppar([~pbindEliGemidos, ~pbindEliGemRev], 8)
+    })
+  ], inf)
 )
 
-// Sequential code:
+
+// Play:
 
 (
-  ~seqEliGemidos = ~pbindEliGemidos.play(t);
+  ~seqEliGemidosSeq = ~eliGemidosSeq.play(t);
   ~seqKik = ~kick.play(t);
-  ~seqEliGemRev = ~pbindEliGemRev.play(t); 
   ~seqNoiseHat = ~pbindNoiseHat.play(t);
   ~seqGrittyPads = ~grittyPadSeqEvent.play(t);
-  ~seqHat = ~pbindHat.play(t);
 )
 
 s.record;
 s.stopRecording;
-
-// Pattern studies ----------------------------------------
-
-(
-  ~pat = Pwhite(0.0, 1.0, inf) * Pseq([-1, 1], inf);
-  ~seq = ~pat.asStream.nextN(8);
-)
-
 
