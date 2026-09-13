@@ -10,7 +10,6 @@ s.stopRecording;
 
 (
 s.waitForBoot({
-  
 t = TempoClock(140/60).permanent_(true);
 // main sound directories:
 ~maindDir = thisProcess.nowExecutingPath; 
