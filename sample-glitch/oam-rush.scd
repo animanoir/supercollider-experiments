@@ -78,11 +78,12 @@ Pdef(\clickcut).stop;
 ~seq = Pbind(
     \amp, Pwhite(0.8, 1.0, inf),
     \instrument, \play,
-    \buf, Prand([~tamb1,~tamb2,~tamb3,~tamb4,~tamb5,~tamb6,~tamb7,~tamb8], inf),
+    //\buf, Prand([~tamb1,~tamb2,~tamb3,~tamb4,~tamb5,~tamb6,~tamb7,~tamb8], inf),
+    \buf, ~tamb1,
     \startPos, Pdefn(\padStartPos, 10000),
     \dur, ~cell,
     \rate, Pdefn(\seqTambRate, 1.0),
-    \pan, Pwhite(-1.0, 1.0, inf),
+    \pan, 0.0,
     \rel, Pkey(\dur) * Pwhite(0.5, 1.0);
 ).play;
 )
